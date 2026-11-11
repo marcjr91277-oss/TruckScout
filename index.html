@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TruckScout — Food Truck Finder</title>
+<style>
+:root{--bg:#f7f7f4;--card:#fff;--ink:#171717;--muted:#686868;--accent:#ff5a36;--line:#e8e8e3;--green:#18794e}
+*{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;background:var(--bg);color:var(--ink)}
+header{padding:22px max(20px,calc((100% - 1100px)/2));background:#171717;color:#fff}
+nav{display:flex;justify-content:space-between;align-items:center;gap:20px}.logo{font-weight:900;font-size:22px}.pill{background:var(--accent);border:0;color:#fff;border-radius:999px;padding:10px 15px;font-weight:800}
+.hero{padding:48px 20px 34px;max-width:1100px;margin:auto}.hero h1{font-size:clamp(34px,6vw,62px);line-height:.98;margin:0 0 15px;max-width:700px}.hero p{color:var(--muted);font-size:18px;max-width:650px}
+.search{display:flex;gap:10px;margin-top:25px}.search input{flex:1;padding:15px 17px;border:1px solid var(--line);border-radius:14px;font-size:16px}.search button{padding:0 20px;border:0;border-radius:14px;background:var(--accent);color:white;font-weight:800}
+main{max-width:1100px;margin:auto;padding:0 20px 50px}.map{height:430px;border-radius:22px;overflow:hidden;border:1px solid var(--line);margin:20px 0;background:#e9e9e3}.map{position:relative}.map iframe{width:100%;height:100%;border:0}.map #leafletMap{width:100%;height:100%}.mapTools{position:absolute;z-index:500;top:12px;right:12px;display:flex;gap:7px}.mapTools button{background:#fff;border:1px solid var(--line);border-radius:10px;padding:9px 11px;font-weight:800;box-shadow:0 2px 8px #0002;cursor:pointer}.mapHint{position:absolute;z-index:500;left:12px;bottom:12px;background:#fff;border-radius:10px;padding:8px 11px;font-size:12px;box-shadow:0 2px 8px #0002}.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 22px}.filter{padding:9px 13px;border:1px solid var(--line);border-radius:999px;background:#fff;cursor:pointer}.filter.active{background:#171717;color:#fff}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:16px}.card{background:var(--card);border:1px solid var(--line);border-radius:20px;overflow:hidden;box-shadow:0 5px 18px #00000008}.photo{height:155px;display:grid;place-items:center;font-size:52px;background:linear-gradient(135deg,#ffd6c8,#fff1e8)}.body{padding:17px}.row{display:flex;justify-content:space-between;gap:12px}.name{font-weight:900;font-size:19px}.rating{font-weight:800}.meta{color:var(--muted);font-size:14px;margin:7px 0}.tag{display:inline-block;background:#f2f2ed;border-radius:8px;padding:5px 8px;font-size:12px;margin:3px 3px 0 0}.actions{display:flex;gap:8px;margin-top:14px}.actions button{flex:1;padding:10px;border-radius:11px;border:1px solid var(--line);background:#fff;font-weight:800;cursor:pointer}.actions .primary{background:#171717;color:#fff}
+.revenue{margin-top:42px;background:#171717;color:#fff;border-radius:24px;padding:25px}.revenue h2{margin-top:0}.revgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px}.rev{background:#252525;border-radius:15px;padding:16px}.rev strong{display:block;font-size:24px;color:#ffd0c5}.rev span{font-size:13px;color:#cfcfcf}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#171717;color:#fff;padding:13px 18px;border-radius:999px;display:none}
+footer{text-align:center;color:var(--muted);font-size:13px;padding:25px}
+.delivery{margin-top:34px;background:#fff;border:1px solid var(--line);border-radius:24px;padding:25px;box-shadow:0 5px 18px #00000008}.delivery h2{margin:0 0 7px}.deliverySub{color:var(--muted);margin-top:0}.deliveryGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px;margin:18px 0}.deliveryCard{display:flex;gap:12px;align-items:center;padding:15px;background:#f7f7f4;border-radius:15px}.deliveryIcon{font-size:27px}.deliveryCard strong,.deliveryCard span{display:block}.deliveryCard span{font-size:13px;color:var(--muted);margin-top:4px}.deliveryActions{display:flex;gap:9px}.deliveryActions button{padding:11px 15px;border:1px solid var(--line);border-radius:11px;background:#fff;font-weight:800;cursor:pointer}.deliveryActions .primary{background:#171717;color:#fff}.deliveryModal{position:fixed;inset:0;background:#0008;display:grid;place-items:center;z-index:9999;padding:20px}.deliverySheet{background:#fff;border-radius:22px;max-width:430px;width:100%;padding:24px}.deliverySheet input,.deliverySheet select{width:100%;padding:13px;margin:7px 0 12px;border:1px solid var(--line);border-radius:11px;font-size:15px}.deliverySheet .actions{display:flex}.deliverySheet h3{margin-top:0}</style>
+</head>
+<body>
+<header><nav><div class="logo">🚚 TruckScout</div><button class="pill" onclick="document.getElementById('vendor').scrollIntoView({behavior:'smooth'})">For vendors</button></nav></header>
+<section class="hero">
+<h1>Find what’s cooking nearby.</h1>
+<p>Live-ish food truck discovery with menus, distance, ratings, deals, and one-tap directions. Built to monetize both hungry customers and truck owners.</p>
+<div class="search"><input id="q" placeholder="Search tacos, BBQ, vegan, pizza…"><button onclick="render()">Search</button><button onclick="useLocation()">📍 Near me</button></div><div id="loc" class="meta" style="margin-top:10px">Location: not set</div>
+</section>
+<main>
+<div class="map" id="mapWrap"><div id="leafletMap" aria-label="Nearby food trucks map"></div><div class="mapTools"><button onclick="locateMe()">📍 Near me</button><button onclick="fitTrucks()">⛶ Show trucks</button></div><div class="mapHint">Tap a pin for details</div></div><div class="toolbar">
+<button class="filter active" data-f="all">All</button><button class="filter" data-f="open">Open now</button><button class="filter" data-f="deal">Deals</button><button class="filter" data-f="vegan">Vegan</button>
+</div>
+<div id="grid" class="grid"></div>
+<section class="delivery" id="delivery">
+<h2>🛵 Delivery from nearby trucks</h2><p class="deliverySub">Order from participating trucks and track your delivery from pickup to your door.</p>
+<div class="deliveryGrid">
+<div class="deliveryCard"><div class="deliveryIcon">🛵</div><div><strong>Fast local delivery</strong><span>Estimated 25–45 min • $2.99 delivery</span></div></div>
+<div class="deliveryCard"><div class="deliveryIcon">📍</div><div><strong>Live order tracking</strong><span>Driver location and ETA in real time</span></div></div>
+<div class="deliveryCard"><div class="deliveryIcon">💳</div><div><strong>Easy checkout</strong><span>Save your address and preferred payment</span></div></div>
+</div>
+<div class="deliveryActions"><button class="primary" onclick="startDelivery()">Order for delivery</button><button onclick="toast('Delivery zones checked')">Check delivery area</button></div>
+</section>
+
+
+<section class="revenue">
+<h2>Revenue engine</h2>
+<div class="revgrid">
+<div class="rev"><strong>Featured spots</strong><span>Trucks pay $19–$49/month to rank higher in discovery.</span></div>
+<div class="rev"><strong>Lead fees</strong><span>Charge vendors for catering leads and event inquiries.</span></div>
+<div class="rev"><strong>Promoted deals</strong><span>Sponsored offers are shown only to relevant nearby users.</span></div>
+<div class="rev"><strong>Pro analytics</strong><span>Sell demand, views, saves, and neighborhood trend insights to vendors.</span></div>
+</div>
+</section>
+<section id="vendor" style="margin-top:42px;background:#fff;border:1px solid var(--line);border-radius:24px;padding:25px;box-shadow:0 5px 18px #00000008">
+<h2>Vendor dashboard</h2><p style="color:var(--muted)">Turn discovery into recurring revenue for your business.</p>
+<div class="revgrid"><div class="rev" style="background:#f6f6f1;color:#171717"><strong style="color:var(--accent)">$19/mo</strong><span style="color:#686868">Starter listing</span></div><div class="rev" style="background:#f6f6f1;color:#171717"><strong style="color:var(--accent)">$49/mo</strong><span style="color:#686868">Growth + featured placement</span></div><div class="rev" style="background:#f6f6f1;color:#171717"><strong style="color:var(--accent)">$99/mo</strong><span style="color:#686868">Pro analytics + lead tools</span></div></div>
+<div class="actions" style="margin-top:18px"><button class="primary" onclick="toast('Vendor onboarding started')">Start vendor onboarding</button><button onclick="toast('Analytics preview opened')">View analytics</button></div>
+</section>
+</main>
+<footer>TruckScout MVP • Demo data • Replace with live location/vendor APIs for production</footer>
+<div id="toast" class="toast"></div>
+<script>
+const trucks=[
+{name:"Fire & Smoke BBQ",type:"BBQ",dist:"0.4 mi",rating:"4.9",emoji:"🍖",tags:["BBQ","Deal"],deal:true,vegan:false,open:true},
+{name:"Taco Luna",type:"Mexican",dist:"0.7 mi",rating:"4.8",emoji:"🌮",tags:["Tacos","Late night"],deal:false,vegan:false,open:true},
+{name:"Green Machine",type:"Vegan",dist:"1.1 mi",rating:"4.7",emoji:"🥗",tags:["Vegan","Healthy"],deal:true,vegan:true,open:true},
+{name:"Pizza Wheels",type:"Pizza",dist:"1.6 mi",rating:"4.6",emoji:"🍕",tags:["Pizza","Family"],deal:false,vegan:false,open:false},
+{name:"Bao Down",type:"Asian",dist:"2.0 mi",rating:"4.9",emoji:"🥟",tags:["Bao","Popular"],deal:false,vegan:false,open:true},
+{name:"Café Cruiser",type:"Coffee",dist:"2.3 mi",rating:"4.8",emoji:"☕",tags:["Coffee","Breakfast"],deal:true,vegan:false,open:true}
+];
+let filter="all";
+function useLocation(){
+ if(!navigator.geolocation){toast("Location is not supported by this browser");return}
+ navigator.geolocation.getCurrentPosition(pos=>{
+  const {latitude,longitude}=pos.coords;
+  localStorage.setItem("truckscout_location",JSON.stringify({latitude,longitude}));
+  document.getElementById("loc").textContent=`Location enabled • ${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
+  toast("Using your location to find nearby trucks");
+  render();
+ },()=>toast("Please allow location access to use Near me"),{enableHighAccuracy:true,timeout:10000});
+}
+function loadLocation(){
+ try{const x=JSON.parse(localStorage.getItem("truckscout_location"));if(x)document.getElementById("loc").textContent=`Location enabled • ${x.latitude.toFixed(4)}, ${x.longitude.toFixed(4)}`;}catch(e){}
+}
+function render(){
+ const q=document.getElementById("q").value.toLowerCase();
+ const list=trucks.filter(t=>{
+  const text=(t.name+" "+t.type+" "+t.tags.join(" ")).toLowerCase();
+  return (!q||text.includes(q))&&(filter==="all"||(filter==="open"&&t.open)||(filter==="deal"&&t.deal)||(filter==="vegan"&&t.vegan));
+ });
+ document.getElementById("grid").innerHTML=list.map(t=>`
+ <article class="card"><div class="photo">${t.emoji}</div><div class="body">
+ <div class="row"><div class="name">${t.name}</div><div class="rating">★ ${t.rating}</div></div>
+ <div class="meta">${t.type} • ${t.dist} • ${t.open?"Open now":"Closed"}</div>
+ <div>${t.tags.map(x=>`<span class="tag">${x}</span>`).join("")}</div>
+ <div class="actions"><button onclick="toast('Saved ${t.name}')">♡ Save</button><button class="primary" onclick="toast('Directions to ${t.name}')">Directions</button></div>
+ </div></article>`).join("")||"<p>No trucks found. Try another cuisine or filter.</p>";
+}
+document.querySelectorAll(".filter").forEach(b=>b.onclick=()=>{document.querySelectorAll(".filter").forEach(x=>x.classList.remove("active"));b.classList.add("active");filter=b.dataset.f;render()});
+
+let userPos=null, map, userMarker, truckMarkers=[];
+const truckCoords=[
+ [45.5231,-122.6765],[45.5154,-122.6784],[45.5112,-122.6501],[45.5322,-122.6640],[45.5480,-122.6750],[45.5065,-122.6200]
+];
+function initMap(){
+ map=L.map("leafletMap",{zoomControl:false}).setView([45.5231,-122.6765],12);
+ L.control.zoom({position:"bottomright"}).addTo(map);
+ L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:"© OpenStreetMap contributors"}).addTo(map);
+ addTruckMarkers();
+}
+function addTruckMarkers(){
+ truckMarkers.forEach(m=>m.remove()); truckMarkers=[];
+ trucks.forEach((t,i)=>{const c=truckCoords[i]; const m=L.marker(c).addTo(map).bindPopup(`<b>${t.emoji} ${t.name}</b><br>${t.type} • ★ ${t.rating}<br>${t.open?"Open now":"Closed"}<br><button onclick="toast('Directions to ${t.name}')" style="margin-top:7px;padding:6px 9px;border:0;border-radius:8px;background:#171717;color:white">Directions</button>`); truckMarkers.push(m)});
+}
+function locateMe(){
+ if(!navigator.geolocation){toast("GPS isn't supported by this browser");return}
+ toast("Finding your location…");
+ navigator.geolocation.getCurrentPosition(pos=>{
+  userPos=pos.coords; const lat=pos.coords.latitude,lon=pos.coords.longitude;
+  if(userMarker) userMarker.remove();
+  userMarker=L.circleMarker([lat,lon],{radius:9,weight:3,fillOpacity:.9}).addTo(map).bindPopup("<b>You are here</b>");
+  map.setView([lat,lon],14); userMarker.openPopup();
+  document.getElementById("loc").textContent="📍 Showing trucks near you";
+  localStorage.setItem("truckscout_location",JSON.stringify({latitude:lat,longitude:lon}));
+  toast("Nearby trucks updated");
+ },()=>toast("Allow location access to use Near me"),{enableHighAccuracy:true,timeout:10000,maximumAge:60000});
+}
+function fitTrucks(){if(truckMarkers.length) map.fitBounds(L.featureGroup(truckMarkers).getBounds().pad(.18));}
+function toast(x){let e=document.getElementById("toast");e.textContent=x;e.style.display="block";setTimeout(()=>e.style.display="none",1800)}
+loadLocation();
+render();
+window.addEventListener("load",initMap);
+function startDelivery(){const old=document.getElementById("deliveryModal");if(old)old.remove();const d=document.createElement("div");d.className="deliveryModal";d.id="deliveryModal";d.innerHTML=`<div class="deliverySheet"><h3>🛵 Delivery checkout</h3><p style="color:var(--muted);font-size:14px">Demo checkout — connect Stripe and a delivery partner for production.</p><label>Delivery address</label><input id="deliveryAddress" placeholder="Enter your delivery address"><label>Delivery speed</label><select><option>Standard • 25–45 min • $2.99</option><option>Priority • 15–30 min • $5.99</option></select><div class="actions"><button onclick="document.getElementById('deliveryModal').remove()">Cancel</button><button class="primary" onclick="confirmDelivery()">Continue</button></div></div>`;document.body.appendChild(d)}
+function confirmDelivery(){const a=document.getElementById("deliveryAddress").value.trim();if(!a){toast("Enter a delivery address");return}document.getElementById("deliveryModal").remove();toast("Delivery order started — choose a truck to continue")}
+</script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js">function startDelivery(){const old=document.getElementById("deliveryModal");if(old)old.remove();const d=document.createElement("div");d.className="deliveryModal";d.id="deliveryModal";d.innerHTML=`<div class="deliverySheet"><h3>🛵 Delivery checkout</h3><p style="color:var(--muted);font-size:14px">Demo checkout — connect Stripe and a delivery partner for production.</p><label>Delivery address</label><input id="deliveryAddress" placeholder="Enter your delivery address"><label>Delivery speed</label><select><option>Standard • 25–45 min • $2.99</option><option>Priority • 15–30 min • $5.99</option></select><div class="actions"><button onclick="document.getElementById('deliveryModal').remove()">Cancel</button><button class="primary" onclick="confirmDelivery()">Continue</button></div></div>`;document.body.appendChild(d)}
+function confirmDelivery(){const a=document.getElementById("deliveryAddress").value.trim();if(!a){toast("Enter a delivery address");return}document.getElementById("deliveryModal").remove();toast("Delivery order started — choose a truck to continue")}
+</script>
+</body>
+</html>
