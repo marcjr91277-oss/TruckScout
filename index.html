@@ -138,6 +138,7 @@ function confirmDelivery(){const a=document.getElementById("deliveryAddress").va
 function confirmDelivery(){const a=document.getElementById("deliveryAddress").value.trim();if(!a){toast("Enter a delivery address");return}document.getElementById("deliveryModal").remove();toast("Delivery order started — choose a truck to continue")}
 </script>
  <button id="start-vendor-onboarding">Start Vendor Onboarding</button> right above the </body>
+ <script>
  ​document.getElementById('start-vendor-onboarding').addEventListener('click', () => {
   window.location.href = 'https://index.html-truck-scout.vercel.app';
 </script>
