@@ -137,5 +137,6 @@ function confirmDelivery(){const a=document.getElementById("deliveryAddress").va
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js">function startDelivery(){const old=document.getElementById("deliveryModal");if(old)old.remove();const d=document.createElement("div");d.className="deliveryModal";d.id="deliveryModal";d.innerHTML=`<div class="deliverySheet"><h3>🛵 Delivery checkout</h3><p style="color:var(--muted);font-size:14px">Demo checkout — connect Stripe and a delivery partner for production.</p><label>Delivery address</label><input id="deliveryAddress" placeholder="Enter your delivery address"><label>Delivery speed</label><select><option>Standard • 25–45 min • $2.99</option><option>Priority • 15–30 min • $5.99</option></select><div class="actions"><button onclick="document.getElementById('deliveryModal').remove()">Cancel</button><button class="primary" onclick="confirmDelivery()">Continue</button></div></div>`;document.body.appendChild(d)}
 function confirmDelivery(){const a=document.getElementById("deliveryAddress").value.trim();if(!a){toast("Enter a delivery address");return}document.getElementById("deliveryModal").remove();toast("Delivery order started — choose a truck to continue")}
 </script>
+ <button id="start-vendor-onboarding">Start Vendor Onboarding</button> right above the </body>
 </body>
 </html>
